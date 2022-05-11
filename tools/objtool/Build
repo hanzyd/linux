@@ -3,8 +3,10 @@ objtool-y += arch/$(SRCARCH)/
 objtool-y += weak.o
 
 objtool-$(SUBCMD_CHECK) += check.o
+objtool-$(SUBCMD_CHECK) += cfi.o
 objtool-$(SUBCMD_CHECK) += special.o
 objtool-$(SUBCMD_ORC) += check.o
+objtool-$(SUBCMD_ORC) += cfi.o
 objtool-$(SUBCMD_ORC) += orc_gen.o
 objtool-$(SUBCMD_ORC) += orc_dump.o
 
