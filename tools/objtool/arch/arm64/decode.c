@@ -33,6 +33,18 @@ struct decode {
 				s64 *imm, struct list_head *stack_ops);
 };
 
+/* --------------------- arch support functions ------------------------- */
+
+unsigned long arch_dest_reloc_offset(int addend)
+{
+	return addend;
+}
+
+unsigned long arch_jump_destination(struct instruction *insn)
+{
+	return insn->offset + insn->immediate;
+}
+
 /* --------------------- miscellaneous functions --------------------------- */
 
 static void reg_check(unsigned int sp_check, unsigned int fp_check,
