@@ -19,6 +19,7 @@
 
 static const char * const fpv_usage[] = {
 	"objtool fpv generate file.o",
+	"objtool fpv dump file.o",
 	NULL,
 };
 
@@ -68,6 +69,9 @@ int cmd_fpv(int argc, const char **argv)
 
 		return elf_write(file->elf);
 	}
+
+	if (!strcmp(argv[0], "dump"))
+		return orc_dump(objname);
 
 	usage_with_options(fpv_usage, fpv_options);
 
