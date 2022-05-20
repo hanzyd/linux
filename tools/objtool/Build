@@ -6,11 +6,13 @@ objtool-$(SUBCMD_CHECK) += check.o
 objtool-$(SUBCMD_CHECK) += cfi.o
 objtool-$(SUBCMD_CHECK) += insn.o
 objtool-$(SUBCMD_CHECK) += decode.o
+objtool-$(SUBCMD_CHECK) += unwind_hints.o
 objtool-$(SUBCMD_CHECK) += special.o
 objtool-$(SUBCMD_ORC) += check.o
 objtool-$(SUBCMD_ORC) += cfi.o
 objtool-$(SUBCMD_ORC) += insn.o
 objtool-$(SUBCMD_ORC) += decode.o
+objtool-$(SUBCMD_ORC) += unwind_hints.o
 objtool-$(SUBCMD_ORC) += orc_gen.o
 objtool-$(SUBCMD_ORC) += orc_dump.o
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-#include <linux/objtool.h>
+#include <asm/unwind_hints.h>
 #include <linux/module.h>
 #include <linux/sort.h>
 #include <asm/ptrace.h>
