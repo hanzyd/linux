@@ -29,6 +29,7 @@ enum insn_type {
 	INSN_TRAP,
 	INSN_ENDBR,
 	INSN_OTHER,
+	INSN_UNRELIABLE,
 };
 
 enum op_dest_type {
