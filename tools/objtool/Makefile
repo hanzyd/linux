@@ -47,7 +47,11 @@ ifeq ($(SRCARCH),x86)
 	SUBCMD_ORC := y
 endif
 
-export SUBCMD_CHECK SUBCMD_ORC
+ifeq ($(SRCARCH),arm64)
+	SUBCMD_FPV := y
+endif
+
+export SUBCMD_CHECK SUBCMD_ORC SUBCMD_FPV
 export srctree OUTPUT CFLAGS SRCARCH AWK
 include $(srctree)/tools/build/Makefile.include
 

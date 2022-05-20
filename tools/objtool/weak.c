@@ -29,3 +29,8 @@ int __weak orc_create(struct objtool_file *file)
 {
 	UNSUPPORTED("orc");
 }
+
+int __weak fpv_decode(struct objtool_file *file)
+{
+	UNSUPPORTED("fpv");
+}

@@ -16,5 +16,6 @@ extern int cmd_parse_options(int argc, const char **argv, const char * const usa
 
 extern int cmd_check(int argc, const char **argv);
 extern int cmd_orc(int argc, const char **argv);
+extern int cmd_fpv(int argc, const char **argv);
 
 #endif /* _BUILTIN_H */

@@ -35,9 +35,17 @@ struct cmd_struct {
 static const char objtool_usage_string[] =
 	"objtool COMMAND [ARGS]";
 
+static const char check_help[] =
+	"Perform stack metadata validation on an object file";
+static const char orc_help[] =
+	"Generate in-place ORC unwind tables for an object file";
+static const char fpv_help[] =
+	"Generate in-place FP validation tables for an object file";
+
 static struct cmd_struct objtool_cmds[] = {
-	{"check",	cmd_check,	"Perform stack metadata validation on an object file" },
-	{"orc",		cmd_orc,	"Generate in-place ORC unwind tables for an object file" },
+	{"check",	cmd_check,	check_help },
+	{"orc",		cmd_orc,	orc_help },
+	{"fpv",		cmd_fpv,	fpv_help },
 };
 
 bool help;
