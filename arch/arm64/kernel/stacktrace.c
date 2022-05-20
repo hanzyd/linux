@@ -5,6 +5,8 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 #include <linux/kernel.h>
+#include <asm/unwind_hints.h>
+#include <asm-generic/orc_lookup.h>
 #include <linux/export.h>
 #include <linux/ftrace.h>
 #include <linux/kprobes.h>
@@ -17,6 +19,120 @@
 #include <asm/pointer_auth.h>
 #include <asm/stack_pointer.h>
 #include <asm/stacktrace.h>
+
+#ifdef CONFIG_FRAME_POINTER_VALIDATION
+
+static void unwind_check_frame(struct stackframe *frame)
+{
+	unsigned long pc, fp;
+	struct orc_entry *orc;
+	bool adjust_pc = false;
+
+	/*
+	 * If a previous frame was unreliable, the CFA cannot be reliably
+	 * computed anymore.
+	 */
+	if (!frame->reliable)
+		return;
+
+	pc = frame->pc;
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	if (is_ftrace_entry(frame->prev_pc))
+		pc = (unsigned long)&ftrace_callsite;
+#endif
+
+	/* Don't let modules unload while we're reading their ORC data. */
+	preempt_disable();
+
+	orc = orc_find(pc);
+	if (!orc || (!orc->fp_offset && orc->type == UNWIND_HINT_TYPE_CALL)) {
+		/*
+		 * If the final instruction in a function happens to be a call
+		 * instruction, the return address would fall outside of the
+		 * function. That could be the case here. This can happen, for
+		 * instance, if the called function is a "noreturn" function.
+		 * The compiler can optimize away the instructions after the
+		 * call. So, adjust the PC so it falls inside the function and
+		 * retry.
+		 *
+		 * We only do this if the current and the previous frames
+		 * are call frames and not hint frames.
+		 */
+		if (frame->unwind_type == UNWIND_HINT_TYPE_CALL) {
+			pc -= 4;
+			adjust_pc = true;
+			orc = orc_find(pc);
+		}
+	}
+	if (!orc) {
+		frame->reliable = false;
+		goto out;
+	}
+	frame->unwind_type = orc->type;
+
+	if (!frame->cfa) {
+		/* Set up the initial CFA and return. */
+		frame->cfa = frame->fp - orc->fp_offset;
+		goto out;
+	}
+
+	/* Compute the next CFA and FP. */
+	switch (orc->type) {
+	case UNWIND_HINT_TYPE_CALL:
+		/* Normal call */
+		frame->cfa += orc->sp_offset;
+		fp = frame->cfa + orc->fp_offset;
+		break;
+
+	case UNWIND_HINT_TYPE_REGS:
+		/*
+		 * pt_regs hint: The frame pointer points to either the
+		 * synthetic frame within pt_regs or to the place where
+		 * x29 and x30 are saved in the register save area in
+		 * pt_regs.
+		 */
+		frame->cfa += orc->sp_offset;
+		fp = frame->cfa + offsetof(struct pt_regs, stackframe) -
+		     sizeof(struct pt_regs);
+		if (frame->fp != fp) {
+			fp = frame->cfa + offsetof(struct pt_regs, regs[29]) -
+			     sizeof(struct pt_regs);
+		}
+		break;
+
+	case UNWIND_HINT_TYPE_FTRACE:
+		/* ftrace callsite hint */
+		frame->cfa += orc->sp_offset;
+		fp = frame->cfa - orc->sp_offset;
+		break;
+
+	case UNWIND_HINT_TYPE_IRQ_STACK:
+		/* Hint to unwind from the IRQ stack to the task stack. */
+		frame->cfa = frame->fp + orc->sp_offset;
+		fp = frame->fp;
+		break;
+
+	default:
+		fp = 0;
+		break;
+	}
+
+	/* Validate the actual FP with the computed one. */
+	if (frame->fp != fp)
+		frame->reliable = false;
+out:
+	if (frame->reliable && adjust_pc)
+		frame->pc = pc;
+	preempt_enable();
+}
+
+#else /* !CONFIG_FRAME_POINTER_VALIDATION */
+
+static void unwind_check_frame(struct stackframe *frame)
+{
+}
+
+#endif /* CONFIG_FRAME_POINTER_VALIDATION */
 
 /*
  * AArch64 PCS assigns the frame pointer to x29.
@@ -53,7 +169,13 @@ static notrace void start_backtrace(struct stackframe *frame, unsigned long fp,
 	 */
 	bitmap_zero(frame->stacks_done, __NR_STACK_TYPES);
 	frame->prev_fp = 0;
+	frame->prev_pc = 0;
 	frame->prev_type = STACK_TYPE_UNKNOWN;
+
+	frame->reliable = true;
+	frame->cfa = 0;
+	frame->unwind_type = UNWIND_HINT_TYPE_CALL;
+	unwind_check_frame(frame);
 }
 NOKPROBE_SYMBOL(start_backtrace);
 
@@ -110,6 +232,7 @@ static int notrace unwind_frame(struct task_struct *tsk,
 	 * Record this frame record's values and location. The prev_fp and
 	 * prev_type are only meaningful to the next unwind_frame() invocation.
 	 */
+	frame->prev_pc = frame->pc;
 	frame->fp = READ_ONCE_NOCHECK(*(unsigned long *)(fp));
 	frame->pc = READ_ONCE_NOCHECK(*(unsigned long *)(fp + 8));
 	frame->prev_fp = fp;
@@ -138,6 +261,10 @@ static int notrace unwind_frame(struct task_struct *tsk,
 	if (is_kretprobe_trampoline(frame->pc))
 		frame->pc = kretprobe_find_ret_addr(tsk, (void *)frame->fp, &frame->kr_cur);
 #endif
+
+	/* If it is the final frame, no need to check reliability. */
+	if (frame->fp != (unsigned long)task_pt_regs(tsk)->stackframe)
+		unwind_check_frame(frame);
 
 	return 0;
 }
@@ -209,4 +336,30 @@ noinline notrace void arch_stack_walk(stack_trace_consume_fn consume_entry,
 				thread_saved_pc(task));
 
 	walk_stackframe(task, &frame, consume_entry, cookie);
+}
+
+noinline int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
+			      void *cookie, struct task_struct *task)
+{
+	struct stackframe frame;
+	int ret = 0;
+
+	if (task == current) {
+		start_backtrace(&frame,
+				(unsigned long)__builtin_frame_address(1),
+				(unsigned long)__builtin_return_address(0));
+	} else {
+		start_backtrace(&frame, thread_saved_fp(task),
+				thread_saved_pc(task));
+	}
+
+	while (!ret) {
+		if (!frame.reliable)
+			return -EINVAL;
+		if (!consume_entry(cookie, frame.pc))
+			return -EINVAL;
+		ret = unwind_frame(task, &frame);
+	}
+
+	return ret == -ENOENT ? 0 : -EINVAL;
 }

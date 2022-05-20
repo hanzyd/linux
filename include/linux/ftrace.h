@@ -616,6 +616,10 @@ extern int ftrace_update_ftrace_func(ftrace_func_t func);
 extern void ftrace_caller(void);
 extern void ftrace_regs_caller(void);
 extern void ftrace_call(void);
+extern void ftrace_call_entry(void);
+extern void ftrace_graph_caller_entry(void);
+extern void ftrace_callsite(void);
+extern bool is_ftrace_entry(unsigned long pc);
 extern void ftrace_regs_call(void);
 extern void mcount_call(void);
 

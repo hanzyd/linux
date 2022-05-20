@@ -299,3 +299,19 @@ int ftrace_disable_ftrace_graph_caller(void)
 }
 #endif /* CONFIG_DYNAMIC_FTRACE */
 #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
+
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+
+bool is_ftrace_entry(unsigned long pc)
+{
+	if (pc == (unsigned long)&ftrace_call_entry)
+		return true;
+
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+	if (pc == (unsigned long)&ftrace_graph_caller_entry)
+		return true;
+#endif
+	return false;
+}
+
+#endif

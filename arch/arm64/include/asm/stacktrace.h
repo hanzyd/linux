@@ -44,6 +44,7 @@ struct stack_info {
  * @prev_fp:     The fp that pointed to this frame record, or a synthetic value
  *               of 0. This is used to ensure that within a stack, each
  *               subsequent frame record is at an increasing address.
+ * @prev_pc:     The pc in the previous frame.
  * @prev_type:   The type of stack this frame record was on, or a synthetic
  *               value of STACK_TYPE_UNKNOWN. This is used to detect a
  *               transition from one stack to another.
@@ -51,16 +52,24 @@ struct stack_info {
  * @kr_cur:      When KRETPROBES is selected, holds the kretprobe instance
  *               associated with the most recently encountered replacement lr
  *               value.
+ *
+ * @cfa:         The sp value at the call site of the current function.
+ * @unwind_type  The previous frame's unwind type.
+ * @reliable:    Stack trace is reliable.
  */
 struct stackframe {
 	unsigned long fp;
 	unsigned long pc;
 	DECLARE_BITMAP(stacks_done, __NR_STACK_TYPES);
 	unsigned long prev_fp;
+	unsigned long prev_pc;
 	enum stack_type prev_type;
 #ifdef CONFIG_KRETPROBES
 	struct llist_node *kr_cur;
 #endif
+	unsigned long cfa;
+	int unwind_type;
+	bool reliable;
 };
 
 extern void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk,
