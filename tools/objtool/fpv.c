@@ -257,6 +257,10 @@ int fpv_decode(struct objtool_file *file)
 
 	add_jump_destinations(file);
 
+	ret = read_unwind_hints(file);
+	if (ret)
+		return ret;
+
 	if (!list_empty(&file->insn_list)) {
 		fill = false;
 		walk_sections(file);

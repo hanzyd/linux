@@ -19,6 +19,7 @@ objtool-$(SUBCMD_FPV) += fpv.o
 objtool-$(SUBCMD_FPV) += cfi.o
 objtool-$(SUBCMD_FPV) += insn.o
 objtool-$(SUBCMD_FPV) += decode.o
+objtool-$(SUBCMD_FPV) += unwind_hints.o
 objtool-$(SUBCMD_FPV) += orc_gen.o
 objtool-$(SUBCMD_FPV) += orc_dump.o
 

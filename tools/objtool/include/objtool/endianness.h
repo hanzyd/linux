@@ -29,6 +29,7 @@
 	case 8: __ret = __NEED_BSWAP ? bswap_64(val) : (val); break;	\
 	case 4: __ret = __NEED_BSWAP ? bswap_32(val) : (val); break;	\
 	case 2: __ret = __NEED_BSWAP ? bswap_16(val) : (val); break;	\
+	case 1: __ret = (val); break;					\
 	default:							\
 		BUILD_BUG(); break;					\
 	}								\

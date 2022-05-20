@@ -15,11 +15,17 @@
  *
  * UNWIND_HINT_FUNC: Generate the unwind metadata of a callable function.
  * Useful for code which doesn't have an ELF function annotation.
+ *
+ * UNWIND_HINT_TYPE_FTRACE: Used to unwind through an ftrace callsite.
+ *
+ * UNWIND_HINT_TYPE_IRQ_STACK: Used to unwind through the IRQ stack.
  */
 #define UNWIND_HINT_TYPE_CALL		0
 #define UNWIND_HINT_TYPE_REGS		1
 #define UNWIND_HINT_TYPE_REGS_PARTIAL	2
 #define UNWIND_HINT_TYPE_FUNC		3
+#define UNWIND_HINT_TYPE_FTRACE		4
+#define UNWIND_HINT_TYPE_IRQ_STACK	5
 
 #ifdef CONFIG_STACK_VALIDATION
 
