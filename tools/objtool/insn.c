@@ -175,3 +175,23 @@ struct reloc *insn_reloc(struct objtool_file *file, struct instruction *insn)
 
 	return insn->reloc;
 }
+
+/*
+ * This is a hack for Clang. Clang is aggressive about removing section
+ * symbols and then some. If we cannot find something to relocate an
+ * instruction against, we must not generate CFI for it or the ORC
+ * generation will fail later.
+ */
+bool insn_can_reloc(struct instruction *insn)
+{
+	struct section *insn_sec = insn->sec;
+	unsigned long insn_off = insn->offset;
+
+	if (insn_sec->sym ||
+	    find_symbol_containing(insn_sec, insn_off) ||
+	    find_symbol_containing(insn_sec, insn_off - 1)) {
+		/* See elf_add_reloc_to_insn(). */
+		return true;
+	}
+	return false;
+}

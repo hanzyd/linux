@@ -46,5 +46,6 @@ int check(struct objtool_file *file);
 int orc_dump(const char *objname);
 int orc_create(struct objtool_file *file);
 int fpv_decode(struct objtool_file *file);
+bool orc_ignore_section(struct section *sec);
 
 #endif /* _OBJTOOL_H */

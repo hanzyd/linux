@@ -1,1 +1,2 @@
 objtool-y += decode.o
+objtool-$(SUBCMD_FPV) += orc.o

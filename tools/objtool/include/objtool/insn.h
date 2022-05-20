@@ -80,11 +80,13 @@ struct instruction *next_insn_same_sec(struct objtool_file *file,
 struct instruction *next_insn_same_func(struct objtool_file *file,
 					struct instruction *insn);
 struct reloc *insn_reloc(struct objtool_file *file, struct instruction *insn);
+bool insn_can_reloc(struct instruction *insn);
 bool insn_cfi_match(struct instruction *insn, struct cfi_state *cfi2);
 bool same_function(struct instruction *insn1, struct instruction *insn2);
 bool is_first_func_insn(struct instruction *insn);
 int decode_instructions(struct objtool_file *file);
 int read_unwind_hints(struct objtool_file *file);
+
 
 #define for_each_insn(file, insn)					\
 	list_for_each_entry(insn, &file->insn_list, list)
