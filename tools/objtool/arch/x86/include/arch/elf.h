@@ -2,5 +2,6 @@
 #define _OBJTOOL_ARCH_ELF
 
 #define R_NONE R_X86_64_NONE
+#define R_PCREL R_X86_64_PC32
 
 #endif /* _OBJTOOL_ARCH_ELF */
