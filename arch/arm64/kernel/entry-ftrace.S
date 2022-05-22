@@ -11,6 +11,7 @@
 #include <asm/assembler.h>
 #include <asm/ftrace.h>
 #include <asm/insn.h>
+#include <asm/unwind_hints.h>
 
 #ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 /*
@@ -95,7 +96,14 @@ SYM_CODE_START(ftrace_common)
 	mov	x3, sp				// regs
 
 SYM_INNER_LABEL(ftrace_call, SYM_L_GLOBAL)
+	/*
+	 * Tracer functions are patched at ftrace_stub. Stack traces
+	 * taken from tracer functions will end up here. Place an
+	 * unwind hint based on the stackframe setup in ftrace_regs_entry.
+	 */
 	bl	ftrace_stub
+SYM_INNER_LABEL(ftrace_call_entry, SYM_L_GLOBAL)
+	UNWIND_HINT_REGS PT_REGS_SIZE
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 SYM_INNER_LABEL(ftrace_graph_call, SYM_L_GLOBAL) // ftrace_graph_caller();
@@ -134,9 +142,24 @@ SYM_CODE_START(ftrace_graph_caller)
 	add	x1, sp, #S_LR			// parent_ip (callsite's LR)
 	ldr	x2, [sp, #PT_REGS_SIZE]	   	// parent fp (callsite's FP)
 	bl	prepare_ftrace_return
+SYM_INNER_LABEL(ftrace_graph_caller_entry, SYM_L_GLOBAL)
+	UNWIND_HINT_REGS PT_REGS_SIZE
 	b	ftrace_common_return
 SYM_CODE_END(ftrace_graph_caller)
 #endif
+
+/*
+ * ftrace_regs_entry() sets up two stackframes - one for the callsite and
+ * one for the ftrace entry code. Unwind hints have been placed for the
+ * ftrace entry code above. We need an unwind hint for the callsite. Callsites
+ * are numerous. But the unwind hint required for all the callsites is the
+ * same. Define a dummy function here with the callsite unwind hint for the
+ * benefit of the unwinder.
+ */
+SYM_CODE_START(ftrace_callsite)
+	UNWIND_HINT_FTRACE 16		// for the callsite
+	ret
+SYM_CODE_END(ftrace_callsite)
 
 #else /* CONFIG_DYNAMIC_FTRACE_WITH_REGS */
 

@@ -6,6 +6,7 @@
 #include <linux/linkage.h>
 #include <asm/asm-offsets.h>
 #include <asm/assembler.h>
+#include <asm/unwind_hints.h>
 
 	.text
 
@@ -71,6 +72,8 @@ SYM_CODE_START(__kretprobe_trampoline)
 
 	mov x0, sp
 	bl trampoline_probe_handler
+	UNWIND_HINT_REGS PT_REGS_SIZE
+
 	/*
 	 * Replace trampoline address in lr with actual orig_ret_addr return
 	 * address.
