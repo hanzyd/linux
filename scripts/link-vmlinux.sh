@@ -109,6 +109,13 @@ objtool_link()
 	local objtoolopt;
 
 	if is_enabled CONFIG_STACK_VALIDATION && \
+	   is_enabled CONFIG_FRAME_POINTER_VALIDATION && \
+	   is_enabled CONFIG_LTO_CLANG; then
+		tools/objtool/objtool fpv generate ${1}
+		return
+	fi
+
+	if is_enabled CONFIG_STACK_VALIDATION && \
 	   ( is_enabled CONFIG_LTO_CLANG || is_enabled CONFIG_X86_KERNEL_IBT ); then
 
 		# Don't perform vmlinux validation unless explicitly requested,

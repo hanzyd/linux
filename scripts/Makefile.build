@@ -226,6 +226,9 @@ ifdef CONFIG_STACK_VALIDATION
 
 objtool := $(objtree)/tools/objtool/objtool
 
+ifdef CONFIG_FRAME_POINTER_VALIDATION
+objtool_args = fpv generate
+else
 objtool_args =								\
 	$(if $(CONFIG_UNWINDER_ORC),orc generate,check)			\
 	$(if $(part-of-module), --module)				\
@@ -236,6 +239,7 @@ objtool_args =								\
 	$(if $(CONFIG_X86_SMAP), --uaccess)				\
 	$(if $(CONFIG_FTRACE_MCOUNT_USE_OBJTOOL), --mcount)		\
 	$(if $(CONFIG_SLS), --sls)
+endif
 
 cmd_objtool = $(if $(objtool-enabled), ; $(objtool) $(objtool_args) $@)
 cmd_gen_objtooldep = $(if $(objtool-enabled), { echo ; echo '$@: $$(wildcard $(objtool))' ; } >> $(dot-target).cmd)

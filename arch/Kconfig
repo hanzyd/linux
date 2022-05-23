@@ -1032,7 +1032,9 @@ config HAVE_STACK_VALIDATION
 	bool
 	help
 	  Architecture supports the 'objtool check' host tool command, which
-	  performs compile-time stack metadata validation.
+	  performs compile-time stack metadata validation. Or, on architectures
+	  that use dynamic frame pointer validation, it supports the
+	  'objtool fpv generate' host tool command.
 
 config HAVE_RELIABLE_STACKTRACE
 	bool
